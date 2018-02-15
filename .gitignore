@@ -1,0 +1,17 @@
+__pycache__/model.cpython-35.pyc
+data/cifar-10-python.tar.gz
+data/cifar-10-batches-py/batches.meta
+data/cifar-10-batches-py/data_batch_1
+data/cifar-10-batches-py/data_batch_2
+data/cifar-10-batches-py/data_batch_3
+data/cifar-10-batches-py/data_batch_4
+data/cifar-10-batches-py/data_batch_5
+data/cifar-10-batches-py/test_batch
+data/processed/test.pt
+data/processed/training.pt
+data/raw/t10k-images-idx3-ubyte
+data/raw/t10k-labels-idx1-ubyte
+data/raw/train-images-idx3-ubyte
+data/raw/train-labels-idx1-ubyte
+result/best_model.pkl
+result/bp_deep.pickle

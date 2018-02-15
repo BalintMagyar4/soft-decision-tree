@@ -3,21 +3,23 @@ import os
 import argparse
 import pickle
 import torch
+import torchvision
 from torchvision import datasets, transforms
+
 
 from model import SoftDecisionTree
 
 # Training settings
-parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                    help='input batch size for training (default: 64)')
-parser.add_argument('--input-dim', type=int, default=28*28, metavar='N',
-                    help='input dimension size(default: 28 * 28)')
+parser = argparse.ArgumentParser(description='PyTorch CIFAR-10 Example')
+parser.add_argument('--dataset', type=str, default='CIFAR-10',
+                    help='used dataset for training, CIFAR-10 or MNIST (default: CIFAR-10)')
+parser.add_argument('--batch-size', type=int, default=32, metavar='N',
+                    help='input batch size for training (default: 32)')
 parser.add_argument('--output-dim', type=int, default=10, metavar='N',
                     help='output dimension size(default: 10)')
-parser.add_argument('--max-depth', type=int, default=8, metavar='N',
-                    help='maximum depth of tree(default: 8)')
-parser.add_argument('--epochs', type=int, default=40, metavar='N',
+parser.add_argument('--max-depth', type=int, default=4, metavar='N',
+                    help='maximum depth of tree(default: 4)')
+parser.add_argument('--epochs', type=int, default=1, metavar='N',
                     help='number of epochs to train (default: 40)')
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
@@ -46,14 +48,39 @@ except:
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-train_loader = torch.utils.data.DataLoader(
+
+if args.dataset == 'CIFAR-10':
+    args.input_dim = 3*32*32
+
+    transform = transforms.Compose(
+        [transforms.ToTensor(),
+        transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5))])
+
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                            download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size,
+                                            shuffle=True,  **kwargs)
+
+
+    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                        download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+                                            shuffle=False, num_workers=2)
+
+    classes = ('plane', 'car', 'bird', 'cat',
+            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+elif args.dataset == 'MNIST':
+    args.input_dim = 28*28
+
+    trainloader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])),
     batch_size=args.batch_size, shuffle=True, **kwargs)
-test_loader = torch.utils.data.DataLoader(
+testloader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=False, transform=transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
@@ -65,7 +92,7 @@ def save_result(acc):
         os.makedirs('./result')
     except:
         print('directory ./result already exists')
-    filename = os.path.join('./result/', 'bp_deep.pickle' if args.deep else 'bp.pickle')
+    filename = os.path.join('./result/', 'bp_deep.pickle')
     f = open(filename,'w')
     pickle.dump(acc, f)
     f.close()
@@ -76,6 +103,6 @@ if args.cuda:
     model.cuda()
 
 for epoch in range(1, args.epochs + 1):
-    model.train_(train_loader, epoch)
-    model.test_(test_loader, epoch)
-save_result()
+    model.train_(trainloader, epoch)
+    accuracy = model.test_(testloader, epoch)
+save_result(accuracy)

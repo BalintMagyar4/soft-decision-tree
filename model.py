@@ -1,12 +1,15 @@
 import os
 import time
 
+import scipy.misc
+
 import pickle
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
+import time
 
 
 class InnerNode():
@@ -162,7 +165,27 @@ class SoftDecisionTree(nn.Module):
                 self.param_list.append(beta)
                 self.module_list.append(fc)
 
+    def get_node_weights(self,epoch):
+        nodes = [self.root]
+        index =0
+        while nodes:
+            node = nodes.pop(0)
+            if not node.leaf:
+                fc = node.fc
+                weights = fc.weight.data.cpu().numpy()
+                weights = weights.reshape((28,28))
+                
+                path = './epoch' + str(epoch)
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                scipy.misc.imsave('./epoch' + str(epoch) + '/' + str(index) + 'layer.png', weights)
+                index +=1
+                nodes.append(node.right)
+                nodes.append(node.left)
+
+
     def train_(self, train_loader, epoch):
+        t = time.time()
         self.train()
         self.define_extras(self.args.batch_size)
         for batch_idx, (data, target) in enumerate(train_loader):
@@ -195,6 +218,10 @@ class SoftDecisionTree(nn.Module):
                     100. * batch_idx / len(train_loader), loss.data[0],
                     correct, len(data),
                     accuracy))
+            
+        elapsed = time.time() - t
+        print("elapsed time in this epoch: " + str(elapsed) + " ms")
+        self.get_node_weights(epoch)
 
     def test_(self, test_loader, epoch):
         self.eval()
@@ -226,6 +253,8 @@ class SoftDecisionTree(nn.Module):
         if accuracy > self.best_accuracy:
             self.save_best('./result')
             self.best_accuracy = accuracy
+
+        return(accuracy)
 
     def save_best(self, path):
         try:
