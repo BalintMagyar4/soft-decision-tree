@@ -220,7 +220,7 @@ class SoftDecisionTree(nn.Module):
                     accuracy))
             
         elapsed = time.time() - t
-        print("elapsed time in this epoch: " + str(elapsed) + " ms")
+        print("elapsed time in this epoch: " + str(elapsed) + " sec")
         self.get_node_weights(epoch)
 
     def test_(self, test_loader, epoch):
