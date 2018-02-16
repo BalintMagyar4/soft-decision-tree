@@ -3,6 +3,8 @@ import time
 
 import scipy.misc
 
+import numpy as np
+
 import pickle
 import torch
 import torch.nn as nn
@@ -173,12 +175,23 @@ class SoftDecisionTree(nn.Module):
             if not node.leaf:
                 fc = node.fc
                 weights = fc.weight.data.cpu().numpy()
-                weights = weights.reshape((28,28))
+
                 
-                path = './epoch' + str(epoch)
+
+                if self.args.dataset == 'CIFAR-10':
+                    
+                    # print(str(weights.shape))
+                    # weights = weights.reshape(3072)
+                    # print(str(weights.shape))
+                    weights = weights.reshape((32,32,3))
+                elif self.args.dataset == 'MNIST':
+                    weights = weights.reshape((28,28))
+                
+                path = os.path.join('./networkWeights', 'epoch' + str(epoch))
                 if not os.path.exists(path):
                     os.makedirs(path)
-                scipy.misc.imsave('./epoch' + str(epoch) + '/' + str(index) + 'layer.png', weights)
+                path = os.path.join(path,str(index) + 'layer.png')
+                scipy.misc.imsave(path, weights)
                 index +=1
                 nodes.append(node.right)
                 nodes.append(node.left)
